@@ -1,0 +1,20 @@
+a {
+  color: red;
+}
+
+.foo-gKhIN_YBfL6v {
+  color: green;
+}
+
+.foo-gKhIN_YBfL6v .bar-huK_3PWWwoGZ {
+  color: orange;
+}
+
+.foo-gKhIN_YBfL6v:not(.bar-huK_3PWWwoGZ):not(.foo-bar-wIFe1cfdleyP),
+.bar-foo-N10p2xuO0_iI {
+  color: yellow;
+}
+
+#foo-gKhIN_YBfL6v {
+  color: blue;
+}

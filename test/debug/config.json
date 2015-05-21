@@ -1,0 +1,15 @@
+{
+  "in": {
+    "": {
+      "transformers": {
+        "name": ".",
+        "options": {
+          "base": "test/debug",
+          "debug": true,
+          "target": "test/debug-target",
+          "uidLength": 12
+        }
+      }
+    }
+  }
+}

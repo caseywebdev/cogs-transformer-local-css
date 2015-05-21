@@ -1,12 +1,18 @@
 {
-  "name": "cogs-transformer-example",
+  "name": "cogs-transformer-local-css",
   "version": "1.0.0",
   "author": "Casey Foster <c@sey.me>",
-  "description": "An example transformer for Cogs.",
+  "description": "A local CSS transformer for Cogs.",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/caseywebdev/cogs-transformer-example"
+    "url": "https://github.com/caseywebdev/cogs-transformer-local-css"
+  },
+  "dependencies": {
+    "async": "1.0.0",
+    "postcss": "4.1.11",
+    "mkdirp": "0.5.1",
+    "underscore": "1.8.3"
   },
   "devDependencies": {
     "cogs-test-helper": "1.x"

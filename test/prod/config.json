@@ -1,6 +1,6 @@
 {
   "in": {
-    "txt": {
+    "css": {
       "transformers": {
         "name": ".",
         "options": {

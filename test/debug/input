@@ -1,0 +1,20 @@
+a {
+  color: red;
+}
+
+.foo {
+  color: green;
+}
+
+.foo .bar {
+  color: orange;
+}
+
+.foo:not(.bar):not(.foo-bar),
+.bar-foo {
+  color: yellow;
+}
+
+#foo {
+  color: blue;
+}
