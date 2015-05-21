@@ -13,15 +13,15 @@ var DEFAULTS = {
   uidLength: 5
 };
 
-var SELECTOR = /[.#]-?[_a-z]+[\w-]*/gi;
+var SELECTOR = /[.#]-?[a-z_][\w-]*/gi;
 
-var BAD_BASE64 = /[+/=]/g;
+var INVALID = /^\d|[+/=]/g;
 
 var getUid = function (file, name, options) {
   var hash = crypto.createHash('md5');
   hash.end(file.path + ':' + name);
   var base64 = hash.read().toString('base64');
-  var uid = base64.replace(BAD_BASE64, '_').slice(0, options.uidLength);
+  var uid = base64.replace(INVALID, '_').slice(0, options.uidLength);
   return options.debug ? name + '-' + uid : uid;
 };
 
