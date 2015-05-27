@@ -20,6 +20,6 @@ a {
 }
 
 .foo .foo:from('some/other/foo.css'):hover,
-.bar #bar:from("some/other/bar.css") {
+.bar #bar:from("./input.css") {
   color: purple;
 }

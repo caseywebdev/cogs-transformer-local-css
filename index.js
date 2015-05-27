@@ -28,7 +28,8 @@ var getUid = function (filePath, options, name) {
 var replace = function (file, options, names, __, prefix, name, pathA, pathB) {
   var remote = pathA || pathB;
   if (remote) {
-    remote = path.join(options.base, remote);
+    var base = remote[0] === '.' ? path.dirname(file.path) : '';
+    remote = path.relative('.', path.resolve(base, remote));
     return prefix + getUid(remote, options, name);
   }
   if (!names[name]) names[name] = getUid(file.path, options, name);
