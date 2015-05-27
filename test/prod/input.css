@@ -18,3 +18,8 @@ a {
 #foo {
   color: blue;
 }
+
+.foo .foo:from('some/other/foo.css'):hover,
+.bar #bar:from("some/other/bar.css") {
+  color: purple;
+}

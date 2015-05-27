@@ -13,33 +13,42 @@ var DEFAULTS = {
   uidLength: 5
 };
 
-var SELECTOR = /[.#]-?[a-z_][\w-]*/gi;
+var SELECTOR = /([.#])(-?[a-z_][\w-]*)(?::from\((?:'(.+?)'|"(.+?)"|.*?)\))?/gi;
 
 var INVALID = /^\d|[+/=]/g;
 
-var getUid = function (file, options, name) {
+var getUid = function (filePath, options, name) {
   var hash = crypto.createHash('md5');
-  hash.end(file.path + ':' + name);
+  hash.end(filePath + ':' + name);
   var base64 = hash.read().toString('base64');
   var uid = base64.replace(INVALID, '_').slice(0, options.uidLength);
   return options.debug ? name + '-' + uid : uid;
 };
 
+var replace = function (file, options, names, __, prefix, name, pathA, pathB) {
+  var remote = pathA || pathB;
+  if (remote) {
+    remote = path.join(options.base, remote);
+    return prefix + getUid(remote, options, name);
+  }
+  if (!names[name]) names[name] = getUid(file.path, options, name);
+  return prefix + names[name];
+};
+
+var rename = function (replace, css) {
+  css.eachRule(function (rule) {
+    rule.selector = rule.selector.replace(SELECTOR, replace);
+  });
+};
+
 var getSourceAndNames = function (file, options) {
   var names = {};
-
-  var source = postcss([function (css) {
-    css.eachRule(function (rule) {
-      rule.selector = rule.selector.replace(SELECTOR, function (selector) {
-        var prefix = selector[0];
-        var name = selector.slice(1);
-        if (!names[name]) names[name] = getUid(file, options, name);
-        return prefix + names[name];
-      });
-    });
-  }]).process(file.buffer.toString()).css;
-
-  return {source: source, names: names};
+  return {
+    source: postcss([
+      _.partial(rename, _.partial(replace, file, options, names))
+    ]).process(file.buffer.toString()).css,
+    names: names
+  };
 };
 
 var getTarget = function (file, options) {
