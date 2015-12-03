@@ -1,3 +1,7 @@
+.foo {
+  color: green;
+}
+
 .foo .bar {
   color: orange;
 }

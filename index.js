@@ -76,14 +76,21 @@ var saveTarget = function (target, json, cb) {
 module.exports = function (file, options, cb) {
   try {
     options = _.extend({}, DEFAULTS, options);
+
     var sourceAndNames = getSourceAndNames(file, options);
+
+    var done = function (er) {
+      if (er) return cb(er);
+      cb(null, {buffer: new Buffer(sourceAndNames.source)});
+    };
+
+    var names = sourceAndNames.names;
+    if (_.isEmpty(names)) return done();
+
     var target = options.target;
     var cache = CACHE[target];
     if (!cache) cache = CACHE[target] = {};
-    cache[getKey(file, options)] = sourceAndNames.names;
-    saveTarget(target, JSON.stringify(cache), function (er) {
-      if (er) return cb(er);
-      cb(null, {buffer: new Buffer(sourceAndNames.source)});
-    });
+    cache[getKey(file, options)] = names;
+    saveTarget(target, JSON.stringify(cache), done);
   } catch (er) { return cb(er); }
 };
