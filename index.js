@@ -6,10 +6,12 @@ var mkdirp = require('mkdirp');
 var path = require('path');
 var postcss = require('postcss');
 
+var CACHE = {};
+
 var DEFAULTS = {
   base: '.',
   debug: false,
-  target: '.',
+  target: 'class-names.json',
   uidLength: 5
 };
 
@@ -52,13 +54,12 @@ var getSourceAndNames = function (file, options) {
   };
 };
 
-var getTarget = function (file, options) {
+var getKey = function (file, options) {
   var basename = path.basename(file.path);
   var ext = path.extname(basename);
   return path.join(
-    options.target,
     path.relative(options.base, path.dirname(file.path)),
-    (ext ? basename.slice(0, -ext.length) : basename) + '.json'
+    ext ? basename.slice(0, -ext.length) : basename
   );
 };
 
@@ -76,13 +77,13 @@ module.exports = function (file, options, cb) {
   try {
     options = _.extend({}, DEFAULTS, options);
     var sourceAndNames = getSourceAndNames(file, options);
-    var target = getTarget(file, options);
-    saveTarget(target, JSON.stringify(sourceAndNames.names), function (er) {
+    var target = options.target;
+    var cache = CACHE[target];
+    if (!cache) cache = CACHE[target] = {};
+    cache[getKey(file, options)] = sourceAndNames.names;
+    saveTarget(target, JSON.stringify(cache), function (er) {
       if (er) return cb(er);
-      cb(null, {
-        buffer: new Buffer(sourceAndNames.source),
-        links: file.links.concat(target)
-      });
+      cb(null, {buffer: new Buffer(sourceAndNames.source)});
     });
   } catch (er) { return cb(er); }
 };

@@ -1,0 +1,8 @@
+.foo .bar {
+  color: orange;
+}
+
+.foo:not(.bar):not(.foo-bar),
+.bar-foo {
+  color: yellow;
+}

@@ -1,12 +1,7 @@
 {
   "in": {
     "css": {
-      "transformers": {
-        "name": ".",
-        "options": {
-          "errorText": "error"
-        }
-      }
+      "transformers": "."
     }
   }
 }

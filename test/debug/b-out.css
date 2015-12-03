@@ -1,0 +1,8 @@
+.foo-oEsyClG__kqM .bar-_5ApUxq6eqH6 {
+  color: orange;
+}
+
+.foo-oEsyClG__kqM:not(.bar-_5ApUxq6eqH6):not(.foo-bar-cKTcEvPO4bjd),
+.bar-foo-W8alit67WEO1 {
+  color: yellow;
+}
