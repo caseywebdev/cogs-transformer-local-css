@@ -7,6 +7,7 @@ var path = require('path');
 var postcss = require('postcss');
 
 var CACHE = {};
+var QUEUES = {};
 
 var DEFAULTS = {
   base: '.',
@@ -63,13 +64,25 @@ var getKey = function (file, options) {
   );
 };
 
-var saveTarget = function (target, json, cb) {
-  fs.readFile(target, 'utf8', function (er, data) {
-    if (data === json) return cb();
+var saveTarget = function (target, cb, last) {
+  if (!QUEUES[target]) QUEUES[target] = [];
+  const queue = QUEUES[target];
+  if ((cb && queue.push(cb) > 1) || !queue.length) return;
+
+  var next = JSON.stringify(CACHE[target]);
+  var done = function (er) {
+    queue.shift()(er);
+    saveTarget(target, null, next);
+  };
+  if (last === next) return done();
+
+  fs.readFile(target, 'utf8', function (er, current) {
+    if (current === next) return done();
+
     async.series([
       _.partial(mkdirp, path.dirname(target)),
-      _.partial(fs.writeFile, target, json)
-    ], cb);
+      _.partial(fs.writeFile, target, next)
+    ], done);
   });
 };
 
@@ -88,9 +101,8 @@ module.exports = function (file, options, cb) {
     if (_.isEmpty(names)) return done();
 
     var target = options.target;
-    var cache = CACHE[target];
-    if (!cache) cache = CACHE[target] = {};
-    cache[getKey(file, options)] = names;
-    saveTarget(target, JSON.stringify(cache), done);
+    if (!CACHE[target]) CACHE[target] = {};
+    CACHE[target][getKey(file, options)] = names;
+    saveTarget(target, done);
   } catch (er) { return cb(er); }
 };
