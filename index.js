@@ -20,6 +20,13 @@ var SELECTOR = /([.#])(-?[a-z_][\w-]*)(?::from\((?:'(.+?)'|"(.+?)"|.*?)\))?/gi;
 
 var INVALID = /^\d|[+/=]/g;
 
+var sortKeys = function (obj) {
+  return _.reduce(_.keys(obj).sort(), function (memo, key) {
+    memo[key] = obj[key];
+    return memo;
+  }, {});
+};
+
 var getUid = function (filePath, options, name) {
   var hash = crypto.createHash('md5');
   hash.end(filePath + ':' + name);
@@ -51,7 +58,7 @@ var getSourceAndNames = function (file, options) {
     source: postcss([
       _.partial(rename, _.partial(replace, file, options, names))
     ]).process(file.buffer.toString()).css,
-    names: names
+    names: sortKeys(names)
   };
 };
 
@@ -66,7 +73,7 @@ var getKey = function (file, options) {
 
 var saveTarget = function (target, cb, last) {
   if (!QUEUES[target]) QUEUES[target] = [];
-  const queue = QUEUES[target];
+  var queue = QUEUES[target];
   if ((cb && queue.push(cb) > 1) || !queue.length) return;
 
   var next = JSON.stringify(CACHE[target]);
@@ -86,6 +93,14 @@ var saveTarget = function (target, cb, last) {
   });
 };
 
+var cacheNames = function (file, options, names) {
+  var target = options.target;
+  var cache = CACHE[target];
+  if (!cache) cache = CACHE[target] = {};
+  cache[getKey(file, options)] = names;
+  CACHE[target] = sortKeys(cache);
+};
+
 module.exports = function (file, options, cb) {
   try {
     options = _.extend({}, DEFAULTS, options);
@@ -100,9 +115,7 @@ module.exports = function (file, options, cb) {
     var names = sourceAndNames.names;
     if (_.isEmpty(names)) return done();
 
-    var target = options.target;
-    if (!CACHE[target]) CACHE[target] = {};
-    CACHE[target][getKey(file, options)] = names;
-    saveTarget(target, done);
+    cacheNames(file, options, names);
+    saveTarget(options.target, done);
   } catch (er) { return cb(er); }
 };
