@@ -1,6 +1,7 @@
 var _ = require('underscore');
 var async = require('async');
 var crypto = require('crypto');
+var cssEscape = require('css.escape');
 var fs = require('fs');
 var mkdirp = require('mkdirp');
 var path = require('path');
@@ -18,8 +19,6 @@ var DEFAULTS = {
 
 var SELECTOR = /([.#])(-?[a-z_][\w-]*)(?::from\((?:'(.+?)'|"(.+?)"|.*?)\))?/gi;
 
-var INVALID = /^\d|[+/=]/g;
-
 var sortKeys = function (obj) {
   return _.reduce(_.keys(obj).sort(), function (memo, key) {
     memo[key] = obj[key];
@@ -28,11 +27,11 @@ var sortKeys = function (obj) {
 };
 
 var getUid = function (filePath, options, name) {
+  var key = getKey(filePath, options) + ':' + name;
   var hash = crypto.createHash('md5');
-  hash.end(filePath + ':' + name);
-  var base64 = hash.read().toString('base64');
-  var uid = base64.replace(INVALID, '_').slice(0, options.uidLength);
-  return options.debug ? name + '-' + uid : uid;
+  hash.end(key);
+  var uid = hash.read().toString('base64').slice(0, options.uidLength);
+  return options.debug ? key + '-' + uid : uid;
 };
 
 var replace = function (file, options, names, __, prefix, name, pathA, pathB) {
@@ -40,10 +39,10 @@ var replace = function (file, options, names, __, prefix, name, pathA, pathB) {
   if (remote) {
     var base = remote[0] === '.' ? path.dirname(file.path) : '';
     remote = path.relative('.', path.resolve(base, remote));
-    return prefix + getUid(remote, options, name);
+    return prefix + cssEscape(getUid(remote, options, name));
   }
   if (!names[name]) names[name] = getUid(file.path, options, name);
-  return prefix + names[name];
+  return prefix + cssEscape(names[name]);
 };
 
 var rename = function (replace, css) {
@@ -62,11 +61,11 @@ var getSourceAndNames = function (file, options) {
   };
 };
 
-var getKey = function (file, options) {
-  var basename = path.basename(file.path);
+var getKey = function (filePath, options) {
+  var basename = path.basename(filePath);
   var ext = path.extname(basename);
   return path.join(
-    path.relative(options.base, path.dirname(file.path)),
+    path.relative(options.base, path.dirname(filePath)),
     ext ? basename.slice(0, -ext.length) : basename
   );
 };
@@ -97,7 +96,7 @@ var cacheNames = function (file, options, names) {
   var target = options.target;
   var cache = CACHE[target];
   if (!cache) cache = CACHE[target] = {};
-  cache[getKey(file, options)] = names;
+  cache[getKey(file.path, options)] = names;
   CACHE[target] = sortKeys(cache);
 };
 
