@@ -13,6 +13,7 @@ var QUEUES = {};
 var DEFAULTS = {
   base: '.',
   debug: false,
+  salt: '',
   target: 'class-names.json',
   uidLength: 5
 };
@@ -29,7 +30,7 @@ var sortKeys = function (obj) {
 var getUid = function (filePath, options, name) {
   var key = getKey(filePath, options) + ':' + name;
   var hash = crypto.createHash('md5');
-  hash.end(key);
+  hash.end(key + options.salt);
   var uid = hash.read().toString('base64').slice(0, options.uidLength);
   return options.debug ? key + '-' + uid : uid;
 };
