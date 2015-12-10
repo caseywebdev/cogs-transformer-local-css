@@ -47,7 +47,7 @@ var replace = function (file, options, names, __, prefix, name, pathA, pathB) {
 };
 
 var rename = function (replace, css) {
-  css.eachRule(function (rule) {
+  css.walkRules(function (rule) {
     rule.selector = rule.selector.replace(SELECTOR, replace);
   });
 };
