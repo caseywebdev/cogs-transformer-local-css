@@ -18,7 +18,8 @@ var DEFAULTS = {
   uidLength: 5
 };
 
-var SELECTOR = /([.#])(-?[a-z_][\w-]*)(?::from\((?:'(.+?)'|"(.+?)"|.*?)\))?/gi;
+var SELECTOR = /([.#])(-?[a-z_][\w-]*)(?::from\((.*?)\))?/gi;
+var QUOTE = /['"]/;
 
 var sortKeys = function (obj) {
   return _.reduce(_.keys(obj).sort(), function (memo, key) {
@@ -35,12 +36,13 @@ var getUid = function (filePath, options, name) {
   return options.debug ? key + '-' + uid : uid;
 };
 
-var replace = function (file, options, names, __, prefix, name, pathA, pathB) {
-  var remote = pathA || pathB;
-  if (remote) {
-    var base = remote[0] === '.' ? path.dirname(file.path) : '';
-    remote = path.relative('.', path.resolve(base, remote));
-    return prefix + cssEscape(getUid(remote, options, name));
+var replace = function (file, options, names, __, prefix, name, from) {
+  if (from === 'global') return prefix + name;
+  if (from && QUOTE.test(from[0])) from = from.slice(1, from.length - 2);
+  if (from) {
+    var base = from[0] === '.' ? path.dirname(file.path) : '';
+    from = path.relative('.', path.resolve(base, from));
+    return prefix + cssEscape(getUid(from, options, name));
   }
   if (!names[name]) names[name] = getUid(file.path, options, name);
   return prefix + cssEscape(names[name]);
@@ -117,5 +119,9 @@ module.exports = function (file, options, cb) {
 
     cacheNames(file, options, names);
     saveTarget(options.target, done);
-  } catch (er) { return cb(er); }
+
+  // CssSyntaxError doesn't inherit SyntaxError or Error as of
+  // https://github.com/postcss/postcss/commit/b2d22246e91148f7b17f13d01fc99195853e37c9#diff-48061a8c1a9fe20c4d37823cd1ad8eb4L5
+  // so transfer the pseudo-error's properties onto an actual error.
+  } catch (er) { return cb(_.extend(new Error(), er)); }
 };

@@ -6,3 +6,7 @@
 .bar #bar:from("./a.css") {
   color: purple;
 }
+
+.foo .foo:from(global):hover {
+  color: orange;
+}
