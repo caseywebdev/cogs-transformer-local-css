@@ -99,7 +99,7 @@ var cacheNames = function (file, options, names) {
   var target = options.target;
   var cache = CACHE[target];
   if (!cache) cache = CACHE[target] = {};
-  cache[getKey(file.path, options)] = names;
+  cache[getKey(file.path, options)] = _.isEmpty(names) ? undefined : names;
   CACHE[target] = sortKeys(cache);
 };
 
@@ -114,14 +114,13 @@ module.exports = function (file, options, cb) {
       cb(null, {buffer: new Buffer(sourceAndNames.source)});
     };
 
-    var names = sourceAndNames.names;
-    if (_.isEmpty(names)) return done();
-
-    cacheNames(file, options, names);
+    cacheNames(file, options, sourceAndNames.names);
     saveTarget(options.target, done);
+  } catch (er) {
+    if (er instanceof Error) return cb(er);
 
-  // CssSyntaxError doesn't inherit SyntaxError or Error as of
-  // https://github.com/postcss/postcss/commit/b2d22246e91148f7b17f13d01fc99195853e37c9#diff-48061a8c1a9fe20c4d37823cd1ad8eb4L5
-  // so transfer the pseudo-error's properties onto an actual error.
-  } catch (er) { return cb(_.extend(new Error(), er)); }
+    // CssSyntaxError doesn't inherit SyntaxError or Error so transfer the
+    // pseudo-error's properties onto an actual error.
+    return cb(_.extend(new Error(), er));
+  }
 };
