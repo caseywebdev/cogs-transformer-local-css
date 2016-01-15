@@ -1,3 +1,5 @@
+'use strict';
+
 var _ = require('underscore');
 var async = require('async');
 var crypto = require('crypto');
@@ -73,24 +75,26 @@ var getKey = function (filePath, options) {
   );
 };
 
-var saveTarget = function (target, cb, last) {
+var saveTarget = function (target, cb) {
   if (!QUEUES[target]) QUEUES[target] = [];
   var queue = QUEUES[target];
   if ((cb && queue.push(cb) > 1) || !queue.length) return;
 
-  var next = JSON.stringify(CACHE[target]);
   var done = function (er) {
     queue.shift()(er);
-    saveTarget(target, null, next);
+    saveTarget(target);
   };
-  if (last === next) return done();
 
   fs.readFile(target, 'utf8', function (er, current) {
-    if (current === next) return done();
+    try { current = JSON.parse(current); } catch (er) {}
+    if (!current) current = {};
+    const next = CACHE[target];
+    CACHE[target] = sortKeys(_.extend(current, next));
+    if (_.isEqual(next, _.pick(current, _.keys(next)))) return done();
 
     async.series([
       _.partial(mkdirp, path.dirname(target)),
-      _.partial(fs.writeFile, target, next)
+      _.partial(fs.writeFile, target, JSON.stringify(CACHE[target]))
     ], done);
   });
 };
