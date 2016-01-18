@@ -89,7 +89,7 @@ var saveTarget = function (target, cb) {
     try { current = JSON.parse(current); } catch (er) {}
     if (!current) current = {};
     const next = CACHE[target];
-    CACHE[target] = sortKeys(_.extend(current, next));
+    CACHE[target] = sortKeys(_.extend({}, current, next));
     if (_.isEqual(next, _.pick(current, _.keys(next)))) return done();
 
     async.series([
