@@ -17,7 +17,8 @@ var DEFAULTS = {
   debug: false,
   salt: '',
   target: 'class-names.json',
-  uidLength: 5
+  uidLength: 5,
+  debounce: 500
 };
 
 var SELECTOR = /([.#])(-?[a-z_][\w-]*)(?::from\((.*?)\))?/gi;
@@ -75,28 +76,26 @@ var getKey = function (filePath, options) {
   );
 };
 
-var saveTarget = function (target, cb) {
-  if (!QUEUES[target]) QUEUES[target] = [];
-  var queue = QUEUES[target];
-  if ((cb && queue.push(cb) > 1) || !queue.length) return;
-
-  var done = function (er) {
-    queue.shift()(er);
-    saveTarget(target);
-  };
-
+const saveTarget = target =>
   fs.readFile(target, 'utf8', function (er, current) {
     try { current = JSON.parse(current); } catch (er) {}
     if (!current) current = {};
     const next = CACHE[target];
     CACHE[target] = sortKeys(_.extend({}, current, next));
-    if (_.isEqual(next, _.pick(current, _.keys(next)))) return done();
+    if (_.isEqual(next, _.pick(current, _.keys(next)))) return;
 
     async.series([
       _.partial(mkdirp, path.dirname(target)),
       _.partial(fs.writeFile, target, JSON.stringify(CACHE[target]))
-    ], done);
+    ], er => { if (er) throw er; });
   });
+
+const queueSave = options => {
+  const target = options.target;
+  const debounce = options.debounce;
+  (QUEUES[target] ||
+    (QUEUES[target] = _.debounce(_.partial(saveTarget, target), debounce))
+  )();
 };
 
 var cacheNames = function (file, options, names) {
@@ -113,13 +112,9 @@ module.exports = function (file, options, cb) {
 
     var sourceAndNames = getSourceAndNames(file, options);
 
-    var done = function (er) {
-      if (er) return cb(er);
-      cb(null, {buffer: new Buffer(sourceAndNames.source)});
-    };
-
     cacheNames(file, options, sourceAndNames.names);
-    saveTarget(options.target, done);
+    queueSave(options);
+    cb(null, {buffer: new Buffer(sourceAndNames.source)});
   } catch (er) {
     if (er instanceof Error) return cb(er);
 

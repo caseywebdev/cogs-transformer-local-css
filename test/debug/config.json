@@ -1,15 +1,12 @@
 {
-  "in": {
-    "css": {
-      "transformers": {
-        "name": ".",
-        "options": {
-          "base": "test/debug",
-          "debug": true,
-          "target": "test/debug/my-class-names-map.json",
-          "uidLength": 12
-        }
-      }
+  "pipe": [{
+    "name": ".",
+    "options": {
+      "base": "test/debug",
+      "debug": true,
+      "target": "test/debug/my-class-names-map.json",
+      "uidLength": 12,
+      "debounce": 0
     }
-  }
+  }]
 }
