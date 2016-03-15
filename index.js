@@ -1,18 +1,18 @@
 'use strict';
 
-var _ = require('underscore');
-var async = require('async');
-var crypto = require('crypto');
-var cssEscape = require('css.escape');
-var fs = require('fs');
-var mkdirp = require('mkdirp');
-var path = require('path');
-var postcss = require('postcss');
+const _ = require('underscore');
+const async = require('async');
+const crypto = require('crypto');
+const cssEscape = require('css.escape');
+const fs = require('fs');
+const mkdirp = require('mkdirp');
+const path = require('path');
+const postcss = require('postcss');
 
-var CACHE = {};
-var QUEUES = {};
+const CACHE = {};
+const QUEUES = {};
 
-var DEFAULTS = {
+const DEFAULTS = {
   base: '.',
   debug: false,
   salt: '',
@@ -21,44 +21,43 @@ var DEFAULTS = {
   debounce: 500
 };
 
-var SELECTOR = /([.#])(-?[a-z_][\w-]*)(?::from\((.*?)\))?/gi;
-var QUOTE = /['"]/;
+const SELECTOR = /([.#])(-?[a-z_][\w-]*)(?::from\((.*?)\))?/gi;
+const QUOTE = /['"]/;
 
-var sortKeys = function (obj) {
-  return _.reduce(_.keys(obj).sort(), function (memo, key) {
+const sortKeys = obj =>
+  _.reduce(_.keys(obj).sort(), (memo, key) => {
     memo[key] = obj[key];
     return memo;
   }, {});
-};
 
-var getUid = function (filePath, options, name) {
-  var key = getKey(filePath, options) + ':' + name;
-  var hash = crypto.createHash('md5');
+const getUid = (filePath, options, name) => {
+  const key = getKey(filePath, options) + ':' + name;
+  const hash = crypto.createHash('md5');
   hash.end(key + options.salt);
-  var uid = hash.read().toString('base64').slice(0, options.uidLength);
+  const uid = hash.read().toString('base64').slice(0, options.uidLength);
   return options.debug ? key + '-' + uid : uid;
 };
 
-var replace = function (file, options, names, __, prefix, name, from) {
+const replace = (file, options, names, __, prefix, name, from) => {
   if (from === 'global') return prefix + name;
   if (from && QUOTE.test(from[0])) from = from.slice(1, from.length - 2);
   if (from) {
-    var base = from[0] === '.' ? path.dirname(file.path) : '';
-    from = path.relative('.', path.resolve(base, from));
+    const base = from[0] === '.' ? path.dirname(file.path) : options.base;
+    from = path.resolve(base, from);
     return prefix + cssEscape(getUid(from, options, name));
   }
   if (!names[name]) names[name] = getUid(file.path, options, name);
   return prefix + cssEscape(names[name]);
 };
 
-var rename = function (replace, css) {
-  css.walkRules(function (rule) {
-    rule.selector = rule.selector.replace(SELECTOR, replace);
-  });
+const rename = (replace, css) => {
+  css.walkRules(rule =>
+    rule.selector = rule.selector.replace(SELECTOR, replace)
+  );
 };
 
-var getSourceAndNames = function (file, options) {
-  var names = {};
+const getSourceAndNames = (file, options) => {
+  const names = {};
   return {
     source: postcss([
       _.partial(rename, _.partial(replace, file, options, names))
@@ -67,9 +66,9 @@ var getSourceAndNames = function (file, options) {
   };
 };
 
-var getKey = function (filePath, options) {
-  var basename = path.basename(filePath);
-  var ext = path.extname(basename);
+const getKey = (filePath, options) => {
+  const basename = path.basename(filePath);
+  const ext = path.extname(basename);
   return path.join(
     path.relative(options.base, path.dirname(filePath)),
     ext ? basename.slice(0, -ext.length) : basename
@@ -77,7 +76,7 @@ var getKey = function (filePath, options) {
 };
 
 const saveTarget = target =>
-  fs.readFile(target, 'utf8', function (er, current) {
+  fs.readFile(target, 'utf8', (er, current) => {
     try { current = JSON.parse(current); } catch (er) {}
     if (!current) current = {};
     const next = CACHE[target];
@@ -98,19 +97,19 @@ const queueSave = options => {
   )();
 };
 
-var cacheNames = function (file, options, names) {
-  var target = options.target;
-  var cache = CACHE[target];
+const cacheNames = (file, options, names) => {
+  const target = options.target;
+  let cache = CACHE[target];
   if (!cache) cache = CACHE[target] = {};
   cache[getKey(file.path, options)] = _.isEmpty(names) ? undefined : names;
   CACHE[target] = sortKeys(cache);
 };
 
-module.exports = function (file, options, cb) {
+module.exports = (file, options, cb) => {
   try {
     options = _.extend({}, DEFAULTS, options);
 
-    var sourceAndNames = getSourceAndNames(file, options);
+    const sourceAndNames = getSourceAndNames(file, options);
 
     cacheNames(file, options, sourceAndNames.names);
     queueSave(options);

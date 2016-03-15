@@ -3,6 +3,6 @@
 }
 
 .foo .foo:from('./some/other/foo.css'):hover,
-.bar #bar:from("./a.css") {
+.bar #bar:from("a.css") {
   color: purple;
 }
