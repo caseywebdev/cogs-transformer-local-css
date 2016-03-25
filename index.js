@@ -76,25 +76,39 @@ const getKey = (filePath, options) => {
 };
 
 const saveTarget = target =>
-  fs.readFile(target, 'utf8', (er, current) => {
-    try { current = JSON.parse(current); } catch (er) {}
-    if (!current) current = {};
-    const next = CACHE[target];
-    CACHE[target] = sortKeys(_.extend({}, current, next));
-    if (_.isEqual(next, _.pick(current, _.keys(next)))) return;
+  fs.readFile(target, 'utf8', (er, currentJson) => {
+    const queue = QUEUES[target];
+    const cbs = queue.cbs;
+    queue.cbs = [];
+    const done = er => _.each(cbs, cb => cb(er));
+
+    if (currentJson) {
+      const current = JSON.parse(currentJson);
+      CACHE[target] = sortKeys(_.extend(current, CACHE[target]));
+    }
+
+    const nextJson = JSON.stringify(CACHE[target]);
+
+    if (nextJson === currentJson) return done();
 
     async.series([
       _.partial(mkdirp, path.dirname(target)),
-      _.partial(fs.writeFile, target, JSON.stringify(CACHE[target]))
-    ], er => { if (er) throw er; });
+      _.partial(fs.writeFile, target, nextJson)
+    ], done);
   });
 
-const queueSave = options => {
+const queueSave = (options, cb) => {
   const target = options.target;
   const debounce = options.debounce;
-  (QUEUES[target] ||
-    (QUEUES[target] = _.debounce(_.partial(saveTarget, target), debounce))
-  )();
+  let queue = QUEUES[target];
+  if (!queue) {
+    queue = QUEUES[target] = {
+      save: _.debounce(_.partial(saveTarget, target), debounce),
+      cbs: []
+    };
+  }
+  queue.cbs.push(cb);
+  queue.save();
 };
 
 const cacheNames = (file, options, names) => {
@@ -112,8 +126,9 @@ module.exports = (file, options, cb) => {
     const sourceAndNames = getSourceAndNames(file, options);
 
     cacheNames(file, options, sourceAndNames.names);
-    queueSave(options);
-    cb(null, {buffer: new Buffer(sourceAndNames.source)});
+
+    const buffer = new Buffer(sourceAndNames.source);
+    queueSave(options, _.partial(cb, _, {buffer}));
   } catch (er) {
     if (er instanceof Error) return cb(er);
 

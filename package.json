@@ -1,6 +1,6 @@
 {
   "name": "cogs-transformer-local-css",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "author": "Casey Foster <c@sey.me>",
   "description": "A local CSS transformer for Cogs.",
   "license": "MIT",
