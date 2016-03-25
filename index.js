@@ -80,15 +80,13 @@ const saveTarget = target => {
   if (queue.saving) return queue.save();
 
   queue.saving = true;
-  fs.readFile(target, 'utf8', (er, currentJson) => {
+  fs.readFile(target, 'utf8', (__, currentJson) => {
     const cbs = queue.cbs;
     queue.cbs = [];
     const done = er => {
       queue.saving = false;
       _.each(cbs, cb => cb(er));
     };
-
-    if (er) return done(er);
 
     if (currentJson) {
       const current = JSON.parse(currentJson);
