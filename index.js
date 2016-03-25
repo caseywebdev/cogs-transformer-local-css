@@ -75,12 +75,20 @@ const getKey = (filePath, options) => {
   );
 };
 
-const saveTarget = target =>
+const saveTarget = target => {
+  const queue = QUEUES[target];
+  if (queue.saving) return queue.save();
+
+  queue.saving = true;
   fs.readFile(target, 'utf8', (er, currentJson) => {
-    const queue = QUEUES[target];
     const cbs = queue.cbs;
     queue.cbs = [];
-    const done = er => _.each(cbs, cb => cb(er));
+    const done = er => {
+      queue.saving = false;
+      _.each(cbs, cb => cb(er));
+    };
+
+    if (er) return done(er);
 
     if (currentJson) {
       const current = JSON.parse(currentJson);
@@ -96,6 +104,7 @@ const saveTarget = target =>
       _.partial(fs.writeFile, target, nextJson)
     ], done);
   });
+};
 
 const queueSave = (options, cb) => {
   const target = options.target;
