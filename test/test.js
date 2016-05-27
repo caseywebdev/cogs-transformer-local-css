@@ -2,7 +2,7 @@ var helper = require('cogs-test-helper');
 
 var test = function (env) {
   var prefix = 'test/' + env + '/';
-  return ['a', 'b', 'c'].reduce(function (memo, l) {
+  return ['a', 'b', 'c/c'].reduce(function (memo, l) {
     memo[prefix + l + '.css'] = {
       path: prefix + l + '.css',
       buffer: helper.getFileBuffer(prefix + l + '-out.css'),
