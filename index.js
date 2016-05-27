@@ -6,7 +6,7 @@ const crypto = require('crypto');
 const cssEscape = require('css.escape');
 const fs = require('fs');
 const mkdirp = require('mkdirp');
-const path = require('path');
+const path = require('npath');
 const postcss = require('postcss');
 
 const CACHE = {};
