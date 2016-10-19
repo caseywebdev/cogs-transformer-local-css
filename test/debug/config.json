@@ -1,12 +1,10 @@
 {
-  "pipe": [{
+  "transformers": [{
     "name": ".",
     "options": {
       "base": "test/debug",
       "debug": true,
-      "target": "test/debug/my-class-names-map.json",
-      "uidLength": 12,
-      "debounce": 0
+      "uidLength": 12
     }
   }]
 }

@@ -1,19 +1,9 @@
-var helper = require('cogs-test-helper');
+const helper = require('cogs-test-helper');
 
-var test = function (env) {
-  var prefix = 'test/' + env + '/';
+const test = env => {
+  const prefix = `test/${env}/`;
   return ['a', 'b', 'c/c'].reduce(function (memo, l) {
-    memo[prefix + l + '.css'] = {
-      path: prefix + l + '.css',
-      buffer: helper.getFileBuffer(prefix + l + '-out.css'),
-      hash: helper.getFileHash(prefix + l + '-out.css'),
-      requires: [{
-        path: prefix + l + '.css',
-        hash: helper.getFileHash(prefix + l + '.css')
-      }],
-      links: [],
-      globs: []
-    };
+    memo[`${prefix}${l}.css`] = helper.getFileBuffer(`${prefix}${l}-out.css`);
     return memo;
   }, {'test/error.css': Error});
 };

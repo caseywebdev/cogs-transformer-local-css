@@ -1,24 +1,15 @@
-'use strict';
-
 const _ = require('underscore');
-const async = require('async');
 const crypto = require('crypto');
 const cssEscape = require('css.escape');
-const fs = require('fs');
-const mkdirp = require('mkdirp');
 const path = require('npath');
 const postcss = require('postcss');
-
-const CACHE = {};
-const QUEUES = {};
 
 const DEFAULTS = {
   base: '.',
   debug: false,
+  export: false,
   salt: '',
-  target: 'class-names.json',
-  uidLength: 5,
-  debounce: 500
+  uidLength: 5
 };
 
 const SELECTOR = /([.#])(-?[a-z_][\w-]*)(?::from\((.*?)\))?/gi;
@@ -75,72 +66,14 @@ const getKey = (filePath, options) => {
   );
 };
 
-const saveTarget = target => {
-  const queue = QUEUES[target];
-  if (queue.saving) return queue.save();
-
-  queue.saving = true;
-  fs.readFile(target, 'utf8', (__, currentJson) => {
-    const cbs = queue.cbs;
-    queue.cbs = [];
-    const done = er => {
-      queue.saving = false;
-      _.each(cbs, cb => cb(er));
-    };
-
-    if (currentJson) {
-      const current = JSON.parse(currentJson);
-      CACHE[target] = sortKeys(_.extend(current, CACHE[target]));
-    }
-
-    const nextJson = JSON.stringify(CACHE[target]);
-
-    if (nextJson === currentJson) return done();
-
-    async.series([
-      _.partial(mkdirp, path.dirname(target)),
-      _.partial(fs.writeFile, target, nextJson)
-    ], done);
-  });
-};
-
-const queueSave = (options, cb) => {
-  const target = options.target;
-  const debounce = options.debounce;
-  let queue = QUEUES[target];
-  if (!queue) {
-    queue = QUEUES[target] = {
-      save: _.debounce(_.partial(saveTarget, target), debounce),
-      cbs: []
-    };
-  }
-  queue.cbs.push(cb);
-  queue.save();
-};
-
-const cacheNames = (file, options, names) => {
-  const target = options.target;
-  let cache = CACHE[target];
-  if (!cache) cache = CACHE[target] = {};
-  cache[getKey(file.path, options)] = _.isEmpty(names) ? undefined : names;
-  CACHE[target] = sortKeys(cache);
-};
-
-module.exports = (file, options, cb) => {
+module.exports = ({file, options}) => {
   try {
     options = _.extend({}, DEFAULTS, options);
-
-    const sourceAndNames = getSourceAndNames(file, options);
-
-    cacheNames(file, options, sourceAndNames.names);
-
-    const buffer = new Buffer(sourceAndNames.source);
-    queueSave(options, _.partial(cb, _, {buffer}));
+    const {names, source} = getSourceAndNames(file, options);
+    return {
+      buffer: Buffer.from(options.export ? JSON.stringify(names) : source)
+    };
   } catch (er) {
-    if (er instanceof Error) return cb(er);
-
-    // CssSyntaxError doesn't inherit SyntaxError or Error so transfer the
-    // pseudo-error's properties onto an actual error.
-    return cb(_.extend(new Error(), er));
+    throw er instanceof Error ? er : _.extend(new Error(), er);
   }
 };
