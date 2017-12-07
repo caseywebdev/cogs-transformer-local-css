@@ -1,5 +1,4 @@
 const _ = require('underscore');
-const CleanCSS = require('clean-css');
 const crypto = require('crypto');
 const cssEscape = require('css.escape');
 const path = require('npath');
@@ -72,14 +71,6 @@ module.exports = ({file, options}) => {
     } catch (er) {
       throw er instanceof Error ? er : _.extend(new Error(), er);
     }
-  }
-
-  if (!options.debug) {
-    const minified = (new CleanCSS(options)).minify(source);
-    const errorMessage = minified.errors.concat(minified.warnings).join('\n');
-    if (errorMessage) throw new Error(errorMessage);
-
-    source = minified.styles;
   }
 
   return {
