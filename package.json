@@ -1,6 +1,6 @@
 {
   "name": "cogs-transformer-local-css",
-  "version": "4.1.0",
+  "version": "4.1.1",
   "author": "Casey Foster <c@sey.me>",
   "description": "A local CSS transformer for Cogs.",
   "license": "MIT",
@@ -11,9 +11,9 @@
   "dependencies": {
     "clean-css": "4",
     "css.escape": "1",
-    "postcss": "6",
+    "postcss": "7",
     "npath": "1",
-    "underscore": "1.8.3"
+    "underscore": "1"
   },
   "devDependencies": {
     "cogs-test-helper": "3"
